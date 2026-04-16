@@ -59,7 +59,7 @@ NumPy
 Joblib / Pickle (model saving)
 ⚙️ Installation & Setup
 1️⃣ Clone the repository
-git clone https://github.com/your-username/fake-profile-detection.gitcd fake-profile-detection
+git clone https://github.com/podalachiranjeevi1234-alt/fake-profile_detector.git
 2️⃣ Install dependencies
 pip install -r requirements.txt
 3️⃣ Train the model
