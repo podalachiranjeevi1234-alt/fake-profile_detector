@@ -1,6 +1,12 @@
 import streamlit as st
 import joblib
-import numpy as np
+import pandas as pd
+from auth import login, signup
+
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(page_title="Fake Profile Detector", page_icon="🕵️")
+
+# ---------------- BACKGROUND STYLE ----------------
 st.markdown(
     """
     <style>
@@ -11,23 +17,19 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-from auth import login, signup
 
-st.set_page_config(page_title="Fake Profile Detector", page_icon="🕵️")
-
-# INIT SESSION
+# ---------------- SESSION STATE ----------------
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
-# ---------------- LOGOUT ----------------
 def logout():
     st.session_state["logged_in"] = False
     st.session_state["user"] = ""
 
-# ---------------- ML MODEL ----------------
+# ---------------- LOAD MODEL ----------------
 model = joblib.load("model.pkl")
 
-# ---------------- AUTH PAGE ----------------
+# ---------------- AUTH SECTION ----------------
 if not st.session_state["logged_in"]:
 
     st.title("🔐 Authentication System")
@@ -48,23 +50,38 @@ else:
 
     st.subheader("Fake Profile Detection AI")
 
+    # ---------------- INPUTS ----------------
     followers = st.number_input("👥 Followers", 0)
     following = st.number_input("➡️ Following", 0)
     posts = st.number_input("📝 Posts", 0)
     bio_length = st.number_input("📄 Bio Length", 0)
     profile_pic = st.selectbox("🖼️ Profile Pic (1=Yes, 0=No)", [0, 1])
 
+    # ---------------- PREDICTION ----------------
     if st.button("🚀 Predict"):
 
-        data = np.array([[followers, following, posts, bio_length, profile_pic]])
+        # ✅ FIX: DataFrame with correct feature names
+        input_data = pd.DataFrame([{
+            "followers": followers,
+            "following": following,
+            "posts": posts,
+            "bio_length": bio_length,
+            "profile_pic": profile_pic
+        }])
 
-        pred = model.predict(data)
-        prob = model.predict_proba(data)
+        pred = model.predict(input_data)
+        prob = model.predict_proba(input_data)
 
+        # ---------------- CLASS HANDLING (SAFE) ----------------
+        real_prob = prob[0][list(model.classes_).index(0)]
+        fake_prob = prob[0][list(model.classes_).index(1)]
+
+        # ---------------- RESULT ----------------
         if pred[0] == 1:
             st.error("⚠️ FAKE PROFILE")
         else:
             st.success("✅ REAL PROFILE")
 
-        st.write("Fake:", prob[0][1])
-        st.write("Real:", prob[0][0])
+        # ---------------- PROBABILITIES ----------------
+        st.write("Real probability:", real_prob)
+        st.write("Fake probability:", fake_prob)
